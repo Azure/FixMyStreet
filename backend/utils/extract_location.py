@@ -269,6 +269,66 @@ def write_csv(points, out_csv):
         for p in points:
             w.writerow([p.get("timestamp", ""), p["lat"], p["lon"], p.get("speed")])
 
+def extract_gps_from_image(image_path):
+    """
+    Extract GPS coordinates from image EXIF data.
+    Args:
+        image_path: Path to the image file
+    Returns:
+        dict with lat, lon if found, None otherwise
+    """
+    exe = find_exiftool()
+    if not exe:
+        print("ExifTool not found. Install exiftool or set EXIFTOOL/EXIFTOOL_PATH environment variable.")
+        return None
+
+    cmd = [
+        exe,
+        "-n",  # Numeric GPS coordinates
+        "-csv",
+        "-GPSLatitude",
+        "-GPSLongitude",
+        "-GPSDateTime",
+        image_path
+    ]
+    
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=30)
+        lines = proc.stdout.splitlines()
+        
+        if len(lines) < 2:  # Need header + data
+            return None
+            
+        # Parse CSV header to find column indices
+        header = [c.strip() for c in lines[0].split(',')]
+        data = [c.strip() for c in lines[1].split(',')]
+        
+        lat_idx = next((i for i, h in enumerate(header) if 'GPSLatitude' in h), None)
+        lon_idx = next((i for i, h in enumerate(header) if 'GPSLongitude' in h), None)
+        
+        if lat_idx is None or lon_idx is None or lat_idx >= len(data) or lon_idx >= len(data):
+            return None
+            
+        lat = data[lat_idx]
+        lon = data[lon_idx]
+        
+        if not lat or not lon or lat == '-' or lon == '-':
+            return None
+            
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+            return {
+                "lat": lat_f,
+                "lon": lon_f
+            }
+        except ValueError:
+            return None
+            
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, Exception) as e:
+        print(f"GPS extraction from image failed: {e}")
+        return None
+
 def extract_gps_from_video_overlay(video_path, sample_interval=30):
     """
     Extract GPS coordinates from video overlay text using OCR.

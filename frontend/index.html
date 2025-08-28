@@ -479,7 +479,7 @@
                         </div>
                     </div>
                     
-                    <div class="map-controls">
+                    <div id="mapControls" class="map-controls">
                         <button class="map-control-button active" onclick="togglePotholeLayer(this)">
                             🕳️ Show Potholes
                         </button>
@@ -636,8 +636,23 @@
                     <img src="http://localhost:5000/api/image/${currentResultId}" 
                          alt="Annotated result" class="image-preview">
                 `;
+                
+                // Show map controls if image has GPS data
+                const hasGpsData = data.detections && data.detections.some(d => d.location && d.location.lat && d.location.lon);
+                if (hasGpsData) {
+                    document.getElementById('mapControls').style.display = 'flex';
+                    // Initialize map for image with GPS data
+                    setTimeout(() => {
+                        initializeMap();
+                        displayDetectionsOnMap(data.detections);
+                    }, 100);
+                } else {
+                    document.getElementById('mapControls').style.display = 'none';
+                }
             } else {
                 imagePreview.innerHTML = '';
+                // Show map controls for video uploads
+                document.getElementById('mapControls').style.display = 'flex';
             }
 
             // Initialize map and analytics for video data
@@ -796,7 +811,15 @@
             
             if (!map || !potholeLayer) {
                 console.log('Map or potholeLayer not initialized');
-                alert('Please switch to Map View tab first and ensure data is loaded');
+                
+                // Check if we're dealing with image data (no GPS)
+                if (!isVideo) {
+                    alert('Map view is only available for images/videos with GPS data. This image does not contain location information.');
+                    return;
+                }
+                
+                // For video data, suggest switching to map tab
+                alert('Please switch to the "Map View" tab first to initialize the map, then try again.');
                 return;
             }
 

@@ -24,7 +24,7 @@ import io
 # Import our existing detection functions
 from backend.detection.detect_potholes_improved import detect_potholes_in_frame
 from backend.detection.enhanced_pothole_detection import detect_potholes_enhanced_from_path
-from backend.utils.extract_location import extract_gps_from_video_overlay
+from backend.utils.extract_location import extract_gps_from_video_overlay, extract_gps_from_image
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -406,6 +406,10 @@ def detect_potholes_image():
         file.save(upload_path)
         
         try:
+            # Extract GPS coordinates from image EXIF data
+            print("Extracting GPS coordinates from image...")
+            image_gps = extract_gps_from_image(upload_path)
+            
             # Process image
             potholes = detect_potholes_in_image(upload_path, sensitivity)
             
@@ -434,7 +438,7 @@ def detect_potholes_image():
             # Prepare response
             detections = []
             for pothole in potholes:
-                detections.append({
+                detection = {
                     'confidence': pothole['confidence'],
                     'bbox': {
                         'x': pothole['x'],
@@ -450,7 +454,18 @@ def detect_potholes_image():
                         'convexity': pothole['convexity'],
                         'solidity': pothole['solidity']
                     }
-                })
+                }
+                
+                # Add GPS location if available
+                if image_gps:
+                    detection['location'] = {
+                        'lat': image_gps['lat'],
+                        'lon': image_gps['lon']
+                    }
+                else:
+                    detection['location'] = None
+                    
+                detections.append(detection)
             
             result = {
                 'result_id': result_id if potholes else None,
@@ -463,7 +478,8 @@ def detect_potholes_image():
                 },
                 'summary': {
                     'total_potholes': len(potholes),
-                    'avg_confidence': sum(p['confidence'] for p in potholes) / len(potholes) if potholes else 0
+                    'avg_confidence': sum(p['confidence'] for p in potholes) / len(potholes) if potholes else 0,
+                    'gps_coverage': 1 if image_gps and potholes else 0
                 },
                 'detections': detections,
                 'annotated_image_available': annotated_image_path is not None

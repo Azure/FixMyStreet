@@ -468,6 +468,12 @@ def detect_potholes_image():
                 'annotated_image_available': annotated_image_path is not None
             }
             
+            # Save results.json for image detection if potholes were found
+            if potholes and result_id:
+                results_file = os.path.join(output_dir, 'results.json')
+                with open(results_file, 'w') as f:
+                    json.dump(result, f, indent=2)
+            
             # Clean up uploaded file
             os.remove(upload_path)
             

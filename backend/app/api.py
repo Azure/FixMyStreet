@@ -21,9 +21,8 @@ from datetime import datetime
 import zipfile
 import io
 
-# Import our existing detection functions
-from backend.detection.detect_potholes_improved import detect_potholes_in_frame
-from backend.detection.enhanced_pothole_detection import detect_potholes_enhanced_from_path
+# Import our refactored detection modules
+from backend.detection import PotholeVideoProcessor, detect_potholes_in_frame, detect_potholes_enhanced_from_path
 from backend.utils.extract_location import extract_gps_from_video_overlay, extract_gps_from_image, extract_with_exiftool
 
 app = Flask(__name__)
@@ -127,7 +126,7 @@ def detect_potholes_in_image(image_path, sensitivity=0.7):
 
 def process_video(video_path, sensitivity=0.7, interval=30):
     """
-    Process video for pothole detection
+    Process video for pothole detection using the refactored video processor
     
     Args:
         video_path: Path to video file
@@ -143,139 +142,45 @@ def process_video(video_path, sensitivity=0.7, interval=30):
     os.makedirs(output_dir, exist_ok=True)
     
     try:
-        # Extract GPS coordinates
-        print("Extracting GPS coordinates...")
-        gps_data = []
+        # Use the new refactored video processor
+        processor = PotholeVideoProcessor("enhanced", sensitivity)
+        detection_result = processor.process_video(video_path, interval, extract_gps=True)
         
-        # Method 1: Try ExifTool for embedded GPS metadata
-        try:
-            print("Trying ExifTool for embedded GPS metadata...")
-            gps_data = extract_with_exiftool(video_path)
-            if gps_data:
-                print(f"ExifTool found {len(gps_data)} GPS points")
-        except Exception as e:
-            print(f"ExifTool GPS extraction failed: {e}")
-        
-        # Method 2: Fallback to OCR-based overlay extraction (if no embedded GPS found)
-        if not gps_data:
-            try:
-                print("Trying OCR-based overlay extraction...")
-                gps_data = extract_gps_from_video_overlay(video_path, sample_interval=interval)
-                if gps_data:
-                    print(f"OCR extraction found {len(gps_data)} GPS points")
-            except Exception as e:
-                print(f"OCR GPS extraction failed: {e}")
-        
-        if not gps_data:
-            print("No GPS data found in video")
-            # No fallback - let the system handle missing GPS data properly
-            gps_data = []
-        
-        # Open video for pothole detection
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise Exception(f"Could not open video: {video_path}")
-        
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        duration = total_frames / fps
-        
-        print(f"Video: {fps:.1f} fps, {total_frames} frames, {duration:.1f}s duration")
-        
-        # Process frames for pothole detection
-        all_detections = []
-        frame_number = 0
+        # Save annotated frames for the first 10 detections
         annotated_frames = []
+        if detection_result.detections:
+            cap = cv2.VideoCapture(video_path)
+            if cap.isOpened():
+                saved_frames = set()
+                for detection in detection_result.detections[:10]:  # Limit to 10 frames
+                    frame_num = detection['frame']
+                    if frame_num not in saved_frames:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+                        ret, frame = cap.read()
+                        if ret:
+                            # Draw bounding box
+                            bbox = detection['bbox']
+                            x, y, w, h = bbox['x'], bbox['y'], bbox['width'], bbox['height']
+                            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                            cv2.putText(frame, f"Pothole {detection['confidence']:.2f}", 
+                                       (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                            
+                            frame_filename = os.path.join(output_dir, f"pothole_frame_{frame_num:06d}.jpg")
+                            cv2.imwrite(frame_filename, frame)
+                            annotated_frames.append(f"pothole_frame_{frame_num:06d}.jpg")
+                            saved_frames.add(frame_num)
+                cap.release()
         
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-            
-            # Process every N frames
-            if frame_number % interval == 0:
-                potholes = detect_potholes_in_frame(frame, frame_number, fps, sensitivity)
-                
-                for pothole in potholes:
-                    # Get GPS coordinates for this frame if available
-                    lat, lon = get_gps_for_frame(frame_number, fps, gps_data)
-                    
-                    # Calculate timestamp
-                    timestamp_seconds = frame_number / fps
-                    timestamp_str = f"{int(timestamp_seconds//60):02d}:{int(timestamp_seconds%60):02d}"
-                    
-                    # Calculate metrics from bbox if not available
-                    bbox = pothole['bbox'] if isinstance(pothole['bbox'], tuple) else pothole['bbox']
-                    x, y, w, h = bbox if isinstance(bbox, tuple) else (bbox['x'], bbox['y'], bbox['width'], bbox['height'])
-                    
-                    # Calculate or get metrics
-                    aspect_ratio = pothole.get('aspect_ratio', w / h if h > 0 else 0)
-                    area = pothole.get('area', w * h)
-                    extent = pothole.get('extent', area / (w * h) if (w * h) > 0 else 0)
-                    
-                    detection = {
-                        'frame': frame_number,
-                        'timestamp': timestamp_str,
-                        'video_time_seconds': timestamp_seconds,
-                        'confidence': pothole['confidence'],
-                        'bbox': {
-                            'x': x,
-                            'y': y,
-                            'width': w,
-                            'height': h
-                        },
-                        'area_pixels': area,
-                        'metrics': {
-                            'aspect_ratio': aspect_ratio,
-                            'extent': extent,
-                            'circularity': pothole.get('circularity', 0.5),
-                            'convexity': pothole.get('convexity', 0.8),
-                            'solidity': pothole.get('solidity', 0.7)
-                        },
-                        'location': {
-                            'lat': lat,
-                            'lon': lon
-                        } if lat and lon else None
-                    }
-                    
-                    all_detections.append(detection)
-                    
-                    # Save annotated frame
-                    if len(annotated_frames) < 10:  # Limit to 10 sample frames
-                        annotated_frame = frame.copy()
-                        x, y, w, h = pothole['bbox']
-                        cv2.rectangle(annotated_frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
-                        cv2.putText(annotated_frame, f"Pothole {pothole['confidence']:.2f}", 
-                                   (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-                        
-                        frame_filename = os.path.join(output_dir, f"pothole_frame_{frame_number:06d}.jpg")
-                        cv2.imwrite(frame_filename, annotated_frame)
-                        annotated_frames.append(f"pothole_frame_{frame_number:06d}.jpg")
-            
-            frame_number += 1
-        
-        cap.release()
-        
-        # Create result summary
+        # Format result for backward compatibility
         result = {
             'result_id': result_id,
-            'video_info': {
-                'fps': fps,
-                'total_frames': total_frames,
-                'duration_seconds': duration,
-                'processed_frames': frame_number
-            },
+            'video_info': detection_result.video_info,
             'detection_params': {
                 'sensitivity': sensitivity,
                 'sample_interval': interval
             },
-            'summary': {
-                'total_potholes': len(all_detections),
-                'frames_with_potholes': len(set(d['frame'] for d in all_detections)),
-                'gps_coverage': len([d for d in all_detections if d['location']]),
-                'avg_confidence': sum(d['confidence'] for d in all_detections) / len(all_detections) if all_detections else 0
-            },
-            'detections': all_detections,
+            'summary': detection_result.summary,
+            'detections': detection_result.detections,
             'annotated_frames': annotated_frames
         }
         
@@ -291,32 +196,6 @@ def process_video(video_path, sensitivity=0.7, interval=30):
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
         raise e
-
-def get_gps_for_frame(frame_number, fps, gps_data):
-    """Get GPS coordinates for a specific frame"""
-    if not gps_data:
-        return None, None
-    
-    video_time = frame_number / fps
-    
-    # Find the closest GPS point
-    closest_point = min(gps_data, key=lambda x: abs(parse_timestamp(x['timestamp']) - video_time))
-    
-    # Only use GPS if within 5 seconds
-    if abs(parse_timestamp(closest_point['timestamp']) - video_time) <= 5.0:
-        return closest_point['lat'], closest_point['lon']
-    
-    return None, None
-
-def parse_timestamp(timestamp_str):
-    """Parse timestamp string to seconds"""
-    try:
-        if ':' in timestamp_str:
-            parts = timestamp_str.split(':')
-            return int(parts[0]) * 60 + int(parts[1])
-        return float(timestamp_str)
-    except:
-        return 0
 
 @app.route('/', methods=['GET'])
 def health_check():

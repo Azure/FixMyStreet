@@ -633,7 +633,7 @@
             if (!isVideo && data.annotated_image_available) {
                 imagePreview.innerHTML = `
                     <h3 style="margin-bottom: 15px; color: #333;">Annotated Image</h3>
-                    <img src="http://localhost:5000/api/results/${currentResultId}" 
+                    <img src="http://localhost:5000/api/image/${currentResultId}" 
                          alt="Annotated result" class="image-preview">
                 `;
             } else {

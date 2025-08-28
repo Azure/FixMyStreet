@@ -307,8 +307,9 @@ def health_check():
         'status': 'healthy',
         'endpoints': {
             'video': '/api/detect/video',
-            'image': '/api/detect/image',
+            'image_detect': '/api/detect/image',
             'results': '/api/results/<result_id>',
+            'image_view': '/api/image/<result_id>',
             'download': '/api/download/<result_id>'
         }
     })
@@ -533,6 +534,29 @@ def download_results(result_id):
         
     except Exception as e:
         return create_error_response(f'Failed to download results: {str(e)}', 500)
+
+@app.route('/api/image/<result_id>', methods=['GET'])
+def get_annotated_image(result_id):
+    """Get the annotated image for a specific result ID"""
+    try:
+        # Check for annotated_image.jpg first (image detection)
+        image_path = os.path.join(RESULTS_FOLDER, result_id, 'annotated_image.jpg')
+        if os.path.exists(image_path):
+            return send_file(image_path, mimetype='image/jpeg')
+        
+        # Check for pothole frame files (video detection)
+        result_dir = os.path.join(RESULTS_FOLDER, result_id)
+        if os.path.exists(result_dir):
+            # Find the first pothole frame image
+            for file in os.listdir(result_dir):
+                if file.startswith('pothole_frame_') and file.endswith('.jpg'):
+                    image_path = os.path.join(result_dir, file)
+                    return send_file(image_path, mimetype='image/jpeg')
+        
+        return create_error_response('Annotated image not found', 404)
+        
+    except Exception as e:
+        return create_error_response(f'Failed to retrieve image: {str(e)}', 500)
 
 @app.errorhandler(413)
 def file_too_large(e):

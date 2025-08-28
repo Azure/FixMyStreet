@@ -168,15 +168,8 @@ def process_video(video_path, sensitivity=0.7, interval=30):
         
         if not gps_data:
             print("No GPS data found in video")
-            # Temporary fallback: Add a default location for testing (Bangalore, India)
-            # This allows testing the map functionality while GPS extraction tools are being set up
-            print("Using default location for testing purposes")
-            gps_data = [{
-                "timestamp": "00:00",
-                "lat": 12.9716,  # Bangalore latitude
-                "lon": 77.5946,  # Bangalore longitude
-                "speed": None
-            }]
+            # No fallback - let the system handle missing GPS data properly
+            gps_data = []
         
         # Open video for pothole detection
         cap = cv2.VideoCapture(video_path)
@@ -439,11 +432,8 @@ def detect_potholes_image():
             
             # Temporary fallback for testing if no GPS found
             if not image_gps:
-                print("No GPS data found in image, using default location for testing")
-                image_gps = {
-                    "lat": 12.9716,  # Bangalore latitude
-                    "lon": 77.5946   # Bangalore longitude
-                }
+                print("No GPS data found in image")
+                image_gps = None
             
             # Process image
             potholes = detect_potholes_in_image(upload_path, sensitivity)

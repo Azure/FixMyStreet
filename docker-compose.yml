@@ -10,6 +10,7 @@ services:
     volumes:
       - ./results:/tmp/results
       - ./uploads:/tmp/uploads
+      - ./datasets:/app/datasets  # Mount datasets for GPS extraction testing
       - ./backend:/app/backend  # Mount backend code for development
     environment:
       - FLASK_ENV=development  # Enable auto-reload for development

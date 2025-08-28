@@ -361,6 +361,18 @@
             height: 20px;
             border-radius: 50%;
             margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .legend-color:hover {
+            transform: scale(1.2);
+        }
+
+        /* Simple pulse for legend items */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .tab-container {
@@ -406,6 +418,74 @@
             
             .header h1 {
                 font-size: 2rem;
+            }
+        }
+
+        /* Enhanced Pothole marker animations with maximum visibility */
+        .pothole-marker {
+            animation: pulsePothole 2s infinite;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid #ffffff !important;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
+        }
+
+        .pothole-marker:hover {
+            transform: scale(1.3) !important;
+            filter: brightness(1.4) drop-shadow(0 0 10px #ff0000) !important;
+            border-color: #ffff00 !important;
+        }
+
+        @keyframes pulsePothole {
+            0% {
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 
+                           0 0 0 0 rgba(255, 255, 0, 0.7),
+                           inset 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(255, 0, 0, 1), 
+                           0 0 0 15px rgba(255, 255, 0, 0.4),
+                           inset 0 0 15px rgba(255, 255, 255, 0.5);
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 
+                           0 0 0 25px rgba(255, 255, 0, 0),
+                           inset 0 0 10px rgba(255, 255, 255, 0.3);
+            }
+        }
+
+        /* Super high-visibility pothole marker for high confidence */
+        .pothole-marker-high {
+            animation: pulseHighPothole 1.2s infinite;
+            border: 4px solid #ffff00 !important;
+            filter: drop-shadow(0 0 8px #ff0000) brightness(1.2) !important;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 1), 0 0 30px rgba(255, 255, 0, 0.6) !important;
+        }
+
+        @keyframes pulseHighPothole {
+            0% {
+                box-shadow: 0 0 20px rgba(255, 0, 0, 1), 
+                           0 0 0 0 rgba(255, 255, 0, 0.9),
+                           0 0 30px rgba(255, 255, 0, 0.6);
+                transform: scale(1);
+            }
+            33% {
+                box-shadow: 0 0 30px rgba(255, 0, 0, 1), 
+                           0 0 0 10px rgba(255, 255, 0, 0.6),
+                           0 0 40px rgba(255, 255, 0, 0.8);
+                transform: scale(1.08);
+            }
+            66% {
+                box-shadow: 0 0 40px rgba(255, 0, 0, 1), 
+                           0 0 0 20px rgba(255, 255, 0, 0.3),
+                           0 0 50px rgba(255, 255, 0, 0.4);
+                transform: scale(1.15);
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(255, 0, 0, 1), 
+                           0 0 0 30px rgba(255, 255, 0, 0),
+                           0 0 30px rgba(255, 255, 0, 0.6);
             }
         }
     </style>
@@ -464,18 +544,21 @@
                 
                 <div id="mapTab" class="tab-content">
                     <div class="legend">
-                        <h3 style="margin-bottom: 10px; color: #333;">Legend</h3>
+                        <h3 style="margin-bottom: 10px; color: #333;">🎯 Pothole Visibility Legend</h3>
                         <div class="legend-item">
-                            <div class="legend-color" style="background: #ff4444;"></div>
-                            <span>High Confidence (>80%)</span>
+                            <div class="legend-color" style="background: #ff0066; border: 2px solid #ffff00; box-shadow: 0 0 8px #ff0066; animation: pulse 1.5s infinite;"></div>
+                            <span><strong>High Confidence (>80%)</strong> - Hot Pink with Yellow Border & Fast Pulse</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color" style="background: #ffa500;"></div>
-                            <span>Medium Confidence (60-80%)</span>
+                            <div class="legend-color" style="background: #ff3300; border: 2px solid #ffff00; box-shadow: 0 0 5px #ff3300;"></div>
+                            <span><strong>Medium Confidence (60-80%)</strong> - Bright Red-Orange with Yellow Border</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color" style="background: #ffff44;"></div>
-                            <span>Low Confidence (<60%)</span>
+                            <div class="legend-color" style="background: #ffff00; border: 2px solid #ff0000; box-shadow: 0 0 3px #ffff00;"></div>
+                            <span><strong>Low Confidence (<60%)</strong> - Bright Yellow with Red Border</span>
+                        </div>
+                        <div style="margin-top: 10px; padding: 8px; background: #f0f8ff; border-radius: 5px; font-size: 0.9em;">
+                            💡 <strong>Tips:</strong> Larger markers = higher confidence. All markers pulse for visibility. Click any marker for details!
                         </div>
                     </div>
                     
@@ -641,11 +724,8 @@
                 const hasGpsData = data.detections && data.detections.some(d => d.location && d.location.lat && d.location.lon);
                 if (hasGpsData) {
                     document.getElementById('mapControls').style.display = 'flex';
-                    // Initialize map for image with GPS data
-                    setTimeout(() => {
-                        initializeMap();
-                        displayDetectionsOnMap(data.detections);
-                    }, 100);
+                    // Store data for later map initialization
+                    window.currentDetections = data.detections;
                 } else {
                     document.getElementById('mapControls').style.display = 'none';
                 }
@@ -657,7 +737,9 @@
 
             // Initialize map and analytics for video data
             if (isVideo && data.detections && data.detections.length > 0) {
-                initializeMap();
+                // Don't initialize map immediately, wait for user to switch to map tab
+                // Just store the data for later use
+                window.currentDetections = data.detections;
                 displayDetectionsOnMap(data.detections);
                 createAnalyticsCharts(data.detections);
             }
@@ -696,18 +778,38 @@
             document.getElementById(tabName + 'Tab').classList.add('active');
 
             // Initialize map when map tab is opened
-            if (tabName === 'map' && !map) {
-                setTimeout(initializeMap, 100);
+            if (tabName === 'map') {
+                setTimeout(() => {
+                    if (!map) {
+                        initializeMap();
+                    }
+                    // Force map resize and center on data
+                    if (map) {
+                        map.invalidateSize();
+                        if (window.currentDetections) {
+                            displayDetectionsOnMap(window.currentDetections);
+                        }
+                    }
+                }, 100);
             }
         }
 
         // Map functionality
         function initializeMap() {
             const mapContainer = document.getElementById('mapContainer');
-            if (!mapContainer || map) return;
+            if (!mapContainer) {
+                console.error('Map container not found');
+                return;
+            }
+            if (map) {
+                console.log('Map already initialized');
+                return;
+            }
 
-            // Initialize Leaflet map
-            map = L.map('mapContainer').setView([40.7128, -74.0060], 13); // Default to NYC
+            console.log('Initializing map...');
+            
+            // Initialize Leaflet map with default location (will be adjusted when data is loaded)
+            map = L.map('mapContainer').setView([12.9716, 77.5946], 13); // Default to Bangalore
 
             // Add tile layer
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -716,16 +818,23 @@
 
             // Initialize layers
             potholeLayer = L.layerGroup().addTo(map);
+            
+            console.log('Map initialized successfully');
         }
 
         function displayDetectionsOnMap(detections) {
-            if (!map || !potholeLayer) return;
+            if (!map || !potholeLayer) {
+                console.log('Map not ready for displayDetectionsOnMap');
+                return;
+            }
 
             potholeLayer.clearLayers();
             const gpsDetectionList = document.getElementById('gpsDetectionList');
             gpsDetectionList.innerHTML = '';
 
-            const gpsDetections = detections.filter(d => d.location && d.location.latitude && d.location.longitude);
+            const gpsDetections = detections.filter(d => d.location && d.location.lat && d.location.lon);
+            
+            console.log('GPS detections found:', gpsDetections.length);
             
             if (gpsDetections.length === 0) {
                 gpsDetectionList.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">No GPS data available for detections</p>';
@@ -735,25 +844,50 @@
             const bounds = [];
 
             gpsDetections.forEach((detection, index) => {
-                const lat = detection.location.latitude;
-                const lon = detection.location.longitude;
+                const lat = detection.location.lat;
+                const lon = detection.location.lon;
                 const confidence = detection.confidence;
 
                 bounds.push([lat, lon]);
 
-                // Determine marker color based on confidence
-                let color = '#ffff44'; // Low confidence (yellow)
-                if (confidence > 0.8) color = '#ff4444'; // High confidence (red)
-                else if (confidence > 0.6) color = '#ffa500'; // Medium confidence (orange)
+                // Determine marker color and size based on confidence - ULTRA HIGH VISIBILITY
+                let color = '#ffff00'; // Low confidence (bright yellow)
+                let borderColor = '#ff0000'; // Red border for contrast
+                let radius = 14;
+                let cssClass = 'pothole-marker';
+                
+                if (confidence > 0.8) {
+                    color = '#ff0066'; // High confidence (hot pink/magenta)
+                    borderColor = '#ffff00'; // Yellow border
+                    radius = 20; // Much larger for high confidence
+                    cssClass = 'pothole-marker pothole-marker-high';
+                } else if (confidence > 0.6) {
+                    color = '#ff3300'; // Medium confidence (bright red-orange)
+                    borderColor = '#ffff00'; // Yellow border
+                    radius = 17;
+                }
 
-                // Create marker
+                // Create an enhanced marker with maximum visibility
                 const marker = L.circleMarker([lat, lon], {
-                    radius: 8,
+                    radius: radius,
                     fillColor: color,
-                    color: '#fff',
-                    weight: 2,
+                    color: borderColor,
+                    weight: 5, // Thicker border
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.95, // More opaque
+                    className: cssClass
+                });
+
+                // Add custom styling for ultra-visibility
+                marker.on('add', function() {
+                    const element = this._path || this._container;
+                    if (element) {
+                        element.style.filter = `drop-shadow(0 0 12px ${color}) brightness(1.2)`;
+                        element.style.zIndex = '1000';
+                        // Add a bright outline
+                        element.style.outline = `2px solid #ffffff`;
+                        element.style.outlineOffset = '2px';
+                    }
                 });
 
                 // Create popup content
@@ -860,7 +994,7 @@
             if (!detectionData || !detectionData.detections) return;
 
             const gpsDetections = detectionData.detections.filter(d => 
-                d.location && d.location.latitude && d.location.longitude
+                d.location && d.location.lat && d.location.lon
             );
 
             if (gpsDetections.length === 0) {
@@ -871,7 +1005,7 @@
             const csvContent = "data:text/csv;charset=utf-8," + 
                 "Index,Latitude,Longitude,Confidence,Frame,Timestamp,Width,Height\n" +
                 gpsDetections.map((d, i) => 
-                    `${i + 1},${d.location.latitude},${d.location.longitude},${(d.confidence * 100).toFixed(2)},${d.frame || ''},${d.timestamp || ''},${d.bbox ? d.bbox.width : ''},${d.bbox ? d.bbox.height : ''}`
+                    `${i + 1},${d.location.lat},${d.location.lon},${(d.confidence * 100).toFixed(2)},${d.frame || ''},${d.timestamp || ''},${d.bbox ? d.bbox.width : ''},${d.bbox ? d.bbox.height : ''}`
                 ).join("\n");
 
             const encodedUri = encodeURI(csvContent);

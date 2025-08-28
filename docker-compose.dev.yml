@@ -1,0 +1,28 @@
+# Development override for docker-compose
+# Run with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  pothole-api:
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    command: ["python", "-m", "flask", "--app", "backend.app.api", "run", "--host", "0.0.0.0", "--port", "5000", "--reload"]
+    volumes:
+      - ./backend:/app/backend:ro  # Read-only mount for security
+      - ./datasets:/app/datasets:ro  # Mount datasets for testing
+    
+  # Future frontend service
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./frontend/src:/app/src
+  #   environment:
+  #     - NODE_ENV=development
+  #   depends_on:
+  #     - pothole-api

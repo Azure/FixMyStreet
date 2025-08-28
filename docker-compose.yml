@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  pothole-api:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile.opencv
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./results:/tmp/results
+      - ./uploads:/tmp/uploads
+      - ./backend:/app/backend  # Mount backend code for development
+    environment:
+      - FLASK_ENV=development  # Enable auto-reload for development
+      - PYTHONPATH=/app
+      - OPENCV_LOG_LEVEL=ERROR
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Alternative service using Alpine Linux (uncomment to use)
+  # pothole-api-alpine:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile.alpine
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./results:/tmp/results
+  #     - ./uploads:/tmp/uploads
+  #   environment:
+  #     - FLASK_ENV=production
+  #     - PYTHONPATH=/app
+  #   restart: unless-stopped
+
+  # Alternative minimal service (uncomment to use)
+  # pothole-api-minimal:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile.minimal
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./results:/tmp/results
+  #     - ./uploads:/tmp/uploads
+  #   environment:
+  #     - FLASK_ENV=production
+  #     - PYTHONPATH=/app
+  #   restart: unless-stopped

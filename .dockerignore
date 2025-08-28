@@ -1,0 +1,50 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.pytest_cache
+*.egg-info
+
+# Virtual environments
+venv
+env
+ENV
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.mp4
+test_*.jpg
+test_*.png
+*.avi
+*.mov
+
+# Results and uploads (will be mounted as volumes)
+results/
+uploads/
+
+# Documentation
+*.md
+!README.md
+
+# Large files
+*.xlsx
+*.csv
+*.log

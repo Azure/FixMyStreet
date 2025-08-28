@@ -12,7 +12,7 @@ A comprehensive AI-powered pothole detection system with Docker support, REST AP
 ```bash
 # Clone and navigate to project
 git clone <repository-url>
-cd hackathon
+cd FixMyStreet
 
 # Start the backend API
 docker-compose up -d
@@ -36,35 +36,46 @@ python serve.py
 ## 📁 Project Structure
 
 ```
-hackathon/
-├── backend/                    # Backend API and processing
+FixMyStreet/
+├── backend/                       # Backend API and processing
 │   ├── app/
-│   │   ├── api.py             # Flask REST API
+│   │   ├── api.py                # Flask REST API
 │   │   └── __init__.py
-│   ├── detection/             # Detection algorithms
+│   ├── detection/                # Detection algorithms
 │   │   ├── enhanced_pothole_detection.py
 │   │   ├── detect_potholes_improved.py
-│   │   └── detect_potholes.py
-│   ├── utils/
-│   │   ├── extract_location.py # GPS extraction utilities
+│   │   ├── detect_potholes.py
 │   │   └── __init__.py
-│   └── requirements.txt       # Python dependencies
-├── frontend/                  # Web interface
-│   ├── index.html            # Main application
-│   ├── serve.py              # Development server
-│   └── README_NEW.md         # Frontend documentation
-├── docker/                   # Docker configurations
-│   ├── Dockerfile.opencv     # Production container
-│   └── [other Dockerfiles]
-├── datasets/                 # Sample images and videos
-│   ├── 1.jpg, 2.jpg         # Test images
-│   └── video1.mp4, video2.mp4 # Test videos
-├── results/                  # Processing results
-├── uploads/                  # Uploaded files
-├── logs/                     # Application logs
-├── docker-compose.yml        # Container orchestration
-├── docker-compose.dev.yml    # Development configuration
-└── README.md                 # This file
+│   ├── utils/
+│   │   ├── extract_location.py   # GPS extraction utilities
+│   │   └── __init__.py
+│   └── requirements.txt          # Python dependencies
+├── frontend/                     # Web interface
+│   ├── index.html               # Main application
+│   ├── serve.py                 # Development server
+│   ├── README.md               # Original frontend docs
+│   └── README_NEW.md           # Frontend documentation
+├── docker/                      # Docker configurations
+│   ├── Dockerfile              # Basic configuration
+│   ├── Dockerfile.alpine       # Alpine-based image
+│   ├── Dockerfile.minimal      # Minimal configuration
+│   ├── Dockerfile.opencv       # Production container
+│   ├── Dockerfile.simple       # Simple configuration
+│   └── Dockerfile.working      # Working development version
+├── datasets/                    # Sample images and videos
+│   ├── 1.jpg, 2.jpg           # Test images
+│   └── video1.mp4, video2.mp4  # Test videos
+├── results/                     # Processing results (gitignored)
+├── uploads/                     # Uploaded files (gitignored)
+├── logs/                        # Application logs (gitignored)
+├── copilot-instructions.md      # AI development guidelines
+├── deploy.bat                   # Windows deployment script
+├── docker-compose.yml          # Container orchestration
+├── docker-compose.dev.yml      # Development configuration
+├── PROJECT_README.md           # Detailed project documentation
+├── README.md                   # This file
+├── SECURITY.md                 # Security guidelines
+└── run.py                      # Local development entry point
 ```
 
 ## 🛠️ Development Setup

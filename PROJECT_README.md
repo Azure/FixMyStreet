@@ -5,31 +5,46 @@ A comprehensive pothole detection system with REST API backend and web frontend.
 ## 🏗️ Project Structure
 
 ```
-hackathon/
-├── backend/                 # Flask API backend
+FixMyStreet/
+├── backend/                       # Flask API backend
 │   ├── app/
 │   │   ├── __init__.py
-│   │   └── api.py          # Main Flask application
-│   ├── detection/          # Detection algorithms
+│   │   └── api.py                # Main Flask application
+│   ├── detection/                # Detection algorithms
 │   │   ├── __init__.py
 │   │   ├── detect_potholes.py
 │   │   ├── detect_potholes_improved.py
 │   │   └── enhanced_pothole_detection.py
-│   ├── utils/              # Utility functions
+│   ├── utils/                    # Utility functions
 │   │   ├── __init__.py
 │   │   └── extract_location.py
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # Web UI (future)
-│   └── README.md          # Frontend development plan
-├── docker/                # Docker configurations
-│   ├── Dockerfile.opencv  # Main production Dockerfile
-│   └── Dockerfile.*       # Other Docker variants
-├── datasets/              # Sample data for testing
-├── results/               # API output results
-├── uploads/               # Temporary upload storage
-├── docker-compose.yml     # Production configuration
-├── docker-compose.dev.yml # Development configuration
-└── run.py                 # Local development entry point
+│   └── requirements.txt          # Python dependencies
+├── frontend/                     # Web UI
+│   ├── index.html               # Main web interface
+│   ├── serve.py                 # Development server
+│   ├── README.md               # Original frontend docs
+│   └── README_NEW.md           # Updated frontend documentation
+├── docker/                      # Docker configurations
+│   ├── Dockerfile              # Basic Dockerfile
+│   ├── Dockerfile.alpine       # Alpine-based image
+│   ├── Dockerfile.minimal      # Minimal configuration
+│   ├── Dockerfile.opencv       # Main production Dockerfile with OpenCV
+│   ├── Dockerfile.simple       # Simple configuration
+│   └── Dockerfile.working      # Working development version
+├── datasets/                    # Sample data for testing
+│   ├── 1.jpg, 2.jpg           # Test images
+│   └── video1.mp4, video2.mp4  # Test videos
+├── results/                     # API output results (gitignored)
+├── uploads/                     # Temporary upload storage (gitignored)
+├── logs/                        # Application logs (gitignored)
+├── copilot-instructions.md      # AI development guidelines
+├── deploy.bat                   # Windows deployment script
+├── docker-compose.yml          # Production configuration
+├── docker-compose.dev.yml      # Development configuration
+├── PROJECT_README.md           # This file - detailed project docs
+├── README.md                   # Main project documentation
+├── SECURITY.md                 # Security guidelines
+└── run.py                      # Local development entry point
 ```
 
 ## 🚀 Quick Start
